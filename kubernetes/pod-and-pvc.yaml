@@ -1,0 +1,87 @@
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: nfs-share-1
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+spec:
+  storageClassName: standard
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nfs-ganesha
+  labels:
+    app: nfs-ganesha
+spec:
+  volumes:
+    - name: nfs-share-1
+      persistentVolumeClaim:
+        claimName: nfs-share-1
+  containers:
+    - name: nfs-ganesha
+      image: apnar/nfs-ganesha
+      securityContext:
+        privileged: true
+        capabilities:
+          add: ["CAP_SYS_ADMIN"]
+      ports:
+        - containerPort: 2049
+          name: "nfs"
+        - containerPort: 111
+          name: "mount"
+        - containerPort: 2048
+          name: "nlm"
+        - containerPort: 875
+          name: "rquota"
+      volumeMounts:
+      - name: nfs-share-1
+        mountPath: /export
+        readOnly: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nfs-ganesha
+  name: nfs-ganesha
+spec:
+  selector:
+    app: nfs-ganesha
+  ports:
+  - name: nfs
+    port: 2049
+    protocol: TCP
+    targetPort: 2049
+  - name: rcp3
+    port: 38465
+    protocol: TCP
+    targetPort: 38465
+  - name: rcp2
+    port: 38466
+    protocol: TCP
+    targetPort: 38466
+  - name: rpc
+    port: 38467
+    protocol: TCP
+    targetPort: 38467
+  - name: nlm
+    port: 662
+    protocol: TCP
+    targetPort: 662
+  - name: mounttcp
+    port: 111
+    protocol: TCP
+    targetPort: 111
+  - name: mountudp
+    port: 111
+    protocol: UDP
+    targetPort: 111
+  type: ClusterIP
