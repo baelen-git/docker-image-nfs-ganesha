@@ -13,7 +13,7 @@ set -e
 : ${GANESHA_ROOT_ACCESS:="*"}
 : ${GANESHA_NFS_PROTOCOLS:="3,4"}
 : ${GANESHA_TRANSPORTS:="UDP,TCP"}
-: ${GANESHA_BOOTSTRAP_CONFIG:="yes"}
+: ${GANESHA_BOOTSTRAP_CONFIG:="no"}
 
 function bootstrap_config {
 	echo "Bootstrapping Ganesha NFS config"
@@ -78,6 +78,12 @@ function startup_script {
 	if [ -f "${STARTUP_SCRIPT}" ]; then
   	/bin/sh ${STARTUP_SCRIPT}
 	fi
+}
+
+function bootstrap_disks {
+	echo "Looking for available disks"
+
+
 }
 
 if [[ "${GANESHA_BOOTSTRAP_CONFIG}" = "yes" ]]

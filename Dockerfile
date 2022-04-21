@@ -1,28 +1,33 @@
-FROM ubuntu:xenial
-MAINTAINER Mitchell Hewes <me@mitcdh.com>
-LABEL org.opencontainers.image.source=https://github.com/apnar/docker-image-nfs-ganesha
+FROM ubuntu:focal
+#MAINTAINER Boris Aelen <baelen@cisco.com>
+#LABEL org.opencontainers.image.source=https://github.com/baelen-git/docker-image-nfs-ganesha
 
 # install prerequisites
 RUN DEBIAN_FRONTEND=noninteractive \
- && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3FE869A9 \
- && echo "deb http://ppa.launchpad.net/gluster/nfs-ganesha-2.7/ubuntu xenial main" > /etc/apt/sources.list.d/nfs-ganesha-2.7.list \
- && echo "deb http://ppa.launchpad.net/gluster/libntirpc-1.7/ubuntu xenial main" > /etc/apt/sources.list.d/libntirpc-1.7.list \
- && echo "deb http://ppa.launchpad.net/gluster/glusterfs-10/ubuntu xenial main" > /etc/apt/sources.list.d/glusterfs-10.list \
  && apt-get update \
- && apt-get install -y netbase nfs-common dbus nfs-ganesha nfs-ganesha-vfs glusterfs-common \
+ && apt-get install -y software-properties-common \
+ && add-apt-repository -y ppa:nfs-ganesha/nfs-ganesha-3.0 \
+ && add-apt-repository -y ppa:gluster/glusterfs-9 \
+ && add-apt-repository ppa:nfs-ganesha/libntirpc-3.0
+
+RUN DEBIAN_FRONTEND=noninteractive \
+ && apt-get install -y nfs-ganesha nfs-ganesha-vfs \
+# && apt-get install -y netbase nfs-common dbus nfs-ganesha nfs-ganesha-vfs glusterfs-common \
  && apt-get clean \
- && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
- && mkdir -p /run/rpcbind /export /var/run/dbus \
- && touch /run/rpcbind/rpcbind.xdr /run/rpcbind/portmap.xdr \
- && chmod 755 /run/rpcbind/* \
- && chown messagebus:messagebus /var/run/dbus
+ && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* 
+
+RUN mkdir -p /run/rpcbind /export /var/run/dbus /var/run/ganesha 
+#RUN touch /run/rpcbind/rpcbind.xdr /run/rpcbind/portmap.xdr 
+#RUN chmod 755 /run/rpcbind/* 
+#RUN chown messagebus:messagebus /var/run/dbus
 
 # Add startup script
 COPY start.sh /
+COPY ganesha.conf /etc/ganesha/ganesha.conf
 
 # NFS ports and portmapper
-EXPOSE 2049 38465-38467 662 111/udp 111
+EXPOSE 2049 2048 111/udp 111 875
 
 # Start Ganesha NFS daemon by default
-CMD ["/start.sh"]
+#CMD ["/start.sh"]
 
